@@ -635,6 +635,247 @@ with tab5:
     )
 
 # ==================================================
+
+# ==============================================
+# CHATBOT HOI DAP BAO VE MEN RANG
+# ENAMEL-AI GUARDIAN - PHIEN BAN 1.0
+# Khong can API AI tra phi
+# ==============================================
+
+import unicodedata
+
+def chuan_hoa(chuoi):
+    """Chuyen chuoi ve dang khong dau de tim kiem."""
+    chuoi = str(chuoi).lower().strip()
+    chuoi = unicodedata.normalize("NFD", chuoi)
+    chuoi = "".join(
+        c for c in chuoi
+        if unicodedata.category(c) != "Mn"
+    )
+    return chuoi.replace("đ", "d")
+
+
+def tim_do_uong(cau_hoi):
+    """Tim ten do uong trong bang 50 mau."""
+    q = chuan_hoa(cau_hoi)
+
+    # Tu khoa ngan gon giup hoc sinh de nhap
+    ten_goi = {
+        "coca cola": "Coca-Cola truyền thống",
+        "coca": "Coca-Cola truyền thống",
+        "pepsi": "Pepsi",
+        "sting": "Sting Dâu",
+        "red bull": "Red Bull",
+        "tra sua": "Trà sữa trân châu",
+        "nuoc cam": "Nước ép cam",
+        "nuoc chanh": "Nước chanh / Trà chanh",
+        "sprite": "Sprite",
+        "7up": "7Up",
+        "nuoc loc": "Nước lọc tinh khiết",
+        "nuoc dua": "Nước dừa tươi",
+        "kombucha": "Trà Kombucha"
+    }
+
+    # Tim ten chinh xac hon truoc
+    danh_sach = sorted(
+        df["Tên đồ uống"].tolist(),
+        key=lambda x: len(chuan_hoa(x)),
+        reverse=True
+    )
+
+    for ten in danh_sach:
+        if chuan_hoa(ten) in q:
+            return ten
+
+    # Tim theo tu khoa, uu tien tu dai
+    for tu in sorted(ten_goi, key=len, reverse=True):
+        if tu in q:
+            return ten_goi[tu]
+
+    return None
+
+
+def tra_loi_chatbot(cau_hoi):
+    """Tra loi bang du lieu va quy tac giao duc."""
+    q = chuan_hoa(cau_hoi)
+
+    # 1. Loi chao
+    if q in ["chao", "xin chao", "hello", "hi"]:
+        return (
+            "Xin chào! 🦷 Mình là trợ lý ENAMEL-AI "
+            "GUARDIAN. Bạn muốn tìm hiểu về độ pH, "
+            "đồ uống axit hay cách bảo vệ men răng?"
+        )
+
+    # 2. Tim do uong trong co so du lieu
+    ten = tim_do_uong(cau_hoi)
+
+    if ten:
+        dong = df[df["Tên đồ uống"] == ten].iloc[0]
+        ph = float(dong["pH"])
+
+        return (
+            f"🥤 **Đồ uống: {ten}**\n\n"
+            f"**pH tham khảo:** {ph:.2f}\n\n"
+            f"**Phân loại:** {classify_ph(ph)}\n\n"
+            f"**Giải thích:** {explain_ph(ph)}\n\n"
+            "✅ **Lời khuyên:** Nếu đồ uống có tính "
+            "axit, nên hạn chế nhâm nhi kéo dài, "
+            "súc miệng bằng nước sạch sau khi uống "
+            "và duy trì vệ sinh răng miệng.\n\n"
+            "ℹ️ Giá trị pH này là dữ liệu minh họa "
+            "của dự án, chưa được xác minh bằng "
+            "đo đạc thực nghiệm."
+        )
+
+    # 3. Cau hoi ve pH
+    if "ph" in q or "do axit" in q:
+        return (
+            "🧪 **pH là gì?**\n\n"
+            "pH là chỉ số biểu thị tính axit hoặc "
+            "tính bazơ của dung dịch.\n\n"
+            "- pH dưới 7: có tính axit.\n"
+            "- pH bằng 7: trung tính.\n"
+            "- pH trên 7: có tính bazơ.\n\n"
+            "Mốc 5,5 thường được dùng để minh họa "
+            "quá trình mất khoáng men răng, nhưng "
+            "không phải ngưỡng cố định cho mọi "
+            "điều kiện trong miệng."
+        )
+
+    # 4. Co che mon men rang
+    if any(x in q for x in [
+        "men rang", "mon rang", "mat khoang",
+        "hydroxyapatite", "sau rang"
+    ]):
+        return (
+            "🦷 **Axit ảnh hưởng đến men răng như "
+            "thế nào?**\n\n"
+            "Men răng chủ yếu chứa khoáng chất "
+            "hydroxyapatite. Khi môi trường trong "
+            "miệng trở nên axit, các khoáng chất "
+            "như canxi và phosphate có thể hòa tan "
+            "khỏi bề mặt men răng.\n\n"
+            "Nước bọt giúp đệm axit và hỗ trợ "
+            "tái khoáng. Nguy cơ còn phụ thuộc "
+            "tần suất uống, thời gian tiếp xúc, "
+            "thành phần đồ uống và vệ sinh răng miệng."
+        )
+
+    # 5. Quy tac bao ve rang
+    if any(x in q for x in [
+        "bao ve", "phong ngua", "nen lam",
+        "khong nen", "loi khuyen", "3 nen",
+        "3 khong"
+    ]):
+        return (
+            "🛡️ **Quy tắc 3 NÊN – 3 KHÔNG**\n\n"
+            "**3 NÊN:**\n"
+            "1. Ưu tiên nước lọc và súc miệng "
+            "bằng nước sạch sau đồ uống axit.\n"
+            "2. Hạn chế tiếp xúc trực tiếp của "
+            "đồ uống axit với răng; có thể "
+            "sử dụng ống hút phù hợp.\n"
+            "3. Vệ sinh răng miệng với kem "
+            "đánh răng chứa fluoride.\n\n"
+            "**3 KHÔNG:**\n"
+            "1. Không ngậm hay nhâm nhi đồ uống "
+            "có tính axit kéo dài.\n"
+            "2. Không đánh răng ngay sau khi "
+            "uống đồ uống axit; có thể chờ "
+            "khoảng một giờ.\n"
+            "3. Không thường xuyên uống đồ chua "
+            "hoặc nhiều đường trước khi ngủ."
+        )
+
+    # 6. Thoi quen uong
+    if any(x in q for x in [
+        "uong moi ngay", "uong nhieu",
+        "nham nhi", "bao nhieu lan",
+        "thoi quen"
+    ]):
+        return (
+            "🥤 Uống đồ uống axit nhiều lần trong "
+            "ngày hoặc nhâm nhi kéo dài có thể "
+            "làm tăng thời gian men răng tiếp xúc "
+            "với môi trường axit.\n\n"
+            "Bạn nên ưu tiên nước lọc, giảm "
+            "tần suất uống đồ chua và sử dụng "
+            "mục Nhật ký uống trong Web App "
+            "để tự đánh giá thói quen."
+        )
+
+    # 7. Cau hoi ngoai pham vi
+    return (
+        "🤖 Mình chưa có câu trả lời phù hợp "
+        "trong bộ kiến thức hiện tại.\n\n"
+        "Bạn có thể hỏi:\n\n"
+        "- Coca-Cola có pH bao nhiêu?\n"
+        "- pH là gì?\n"
+        "- Axit ảnh hưởng đến men răng thế nào?\n"
+        "- Quy tắc 3 Nên – 3 Không là gì?\n"
+        "- Làm thế nào để bảo vệ men răng?\n\n"
+        "Mình chỉ hỗ trợ kiến thức giáo dục "
+        "về đồ uống axit và sức khỏe men răng."
+    )
+
+
+# ==============================================
+# GIAO DIEN CHATBOT STREAMLIT
+# ==============================================
+
+st.divider()
+st.header("🤖 HỎI ĐÁP CÙNG ENAMEL-AI GUARDIAN")
+
+st.write(
+    "Hãy nhập câu hỏi để khám phá kiến thức "
+    "về đồ uống axit và cách bảo vệ men răng."
+)
+
+st.caption(
+    "Chatbot hoạt động theo dữ liệu và quy tắc "
+    "lập trình, không sử dụng mô hình AI tạo sinh."
+)
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = [
+        {
+            "role": "assistant",
+            "content": (
+                "Xin chào! 🦷 Mình là trợ lý "
+                "ENAMEL-AI GUARDIAN. Bạn muốn "
+                "hỏi gì về đồ uống và men răng?"
+            )
+        }
+    ]
+
+for tin_nhan in st.session_state.chat_history:
+    with st.chat_message(tin_nhan["role"]):
+        st.markdown(tin_nhan["content"])
+
+cau_hoi_moi = st.chat_input(
+    "Nhập câu hỏi của bạn tại đây..."
+)
+
+if cau_hoi_moi:
+    st.session_state.chat_history.append({
+        "role": "user",
+        "content": cau_hoi_moi
+    })
+
+    phan_hoi = tra_loi_chatbot(cau_hoi_moi)
+
+    st.session_state.chat_history.append({
+        "role": "assistant",
+        "content": phan_hoi
+    })
+
+    st.rerun()
+
+if st.button("🗑️ Xóa lịch sử trò chuyện"):
+    st.session_state.chat_history = []
+    st.rerun()
+
 # CHÂN TRANG
 # ==================================================
 
